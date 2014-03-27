@@ -7,9 +7,15 @@
 # modify it under the terms of the Qwt License, Version 1.0
 ################################################################
 
-CONFIG += qwt
+CONFIG      += qwt
 MOC_DIR      = moc
 RCC_DIR      = resources
+
+unix {
+    CONFIG      += link_pkgconfig
+    PKGCONFIG   += libnl-genl-3.0 libnl-3.0
+}
+
 !debug_and_release {
     OBJECTS_DIR       = obj
 }

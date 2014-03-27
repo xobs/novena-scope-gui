@@ -57,7 +57,7 @@ Plot::Plot(QWidget *parent):
 
     setAxisTitle(QwtPlot::xBottom, "Time [s]");
     setAxisScale(QwtPlot::xBottom, d_interval.minValue(), d_interval.maxValue()); 
-    setAxisScale(QwtPlot::yLeft, -200.0, 200.0);
+    setAxisScale(QwtPlot::yLeft, 0, 255);
 
     QwtPlotGrid *grid = new QwtPlotGrid();
     grid->setPen(QPen(Qt::gray, 0.0, Qt::DotLine));
