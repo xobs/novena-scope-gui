@@ -1,0 +1,10 @@
+Makefile
+*.app
+*.swp
+*.swo
+
+/moc
+/obj
+
+# Executables
+/oscilloscope
