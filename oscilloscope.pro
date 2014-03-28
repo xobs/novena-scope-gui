@@ -32,6 +32,7 @@ HEADERS = \
     ad9520.h \
     adc08d1020.h \
     dac101c085.h \
+    lmh6518.h \
     mainwindow.h 
 
 SOURCES = \
@@ -45,4 +46,5 @@ SOURCES = \
     ad9520.cpp \
     adc08d1020.cpp \
     dac101c085.cpp \
+    lmh6518.cpp \
     main.cpp
