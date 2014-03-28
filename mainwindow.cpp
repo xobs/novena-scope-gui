@@ -60,7 +60,7 @@ MainWindow::MainWindow(QWidget *parent):
     connect(d_afeFilterKnob, SIGNAL(valueChanged(double)),
         SIGNAL(signalAfeFilterChanged(double)));
     connect(d_afeAttenuationKnob, SIGNAL(valueChanged(double)),
-        SIGNAL(signalAfeTrimPreampChanged(double)));
+        SIGNAL(signalAfeAttenuationChanged(double)));
 
     connect(d_intervalWheel, SIGNAL(valueChanged(double)),
         d_plot, SLOT(setIntervalLength(double)) );
