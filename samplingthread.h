@@ -9,6 +9,7 @@
 class Ad9520;
 class Adc08d1020;
 class Dac101c085;
+class Lmh6518;
 
 class SamplingThread: public QwtSamplingThread
 {
@@ -24,6 +25,9 @@ public:
 public Q_SLOTS:
     void setAmplitude(double);
     void setFrequency(double);
+    void setAfeOffset(double);
+    void setAfeFilter(double);
+    void setAfeAttenuation(double);
 
 protected:
     virtual void sample(double elapsed);
@@ -47,4 +51,5 @@ private:
     Ad9520 *pll;
     Adc08d1020 *adc;
     Dac101c085 *dac;
+    Lmh6518 *vga;
 };

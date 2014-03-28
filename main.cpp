@@ -20,6 +20,12 @@ int main(int argc, char **argv)
         &samplingThread, SLOT(setAmplitude(double)));
     window.connect(&window, SIGNAL(signalIntervalChanged(double)),
         &samplingThread, SLOT(setInterval(double)));
+    window.connect(&window, SIGNAL(signalAfeOffsetChanged(double)),
+        &samplingThread, SLOT(setAfeOffset(double)));
+    window.connect(&window, SIGNAL(signalAfeFilterChanged(double)),
+        &samplingThread, SLOT(setAfeFilter(double)));
+    window.connect(&window, SIGNAL(signalAfeAttenuationChanged(double)),
+        &samplingThread, SLOT(setAfeAttenuation(double)));
 
     window.show();
 

@@ -21,6 +21,7 @@
 #include "ad9520.h"
 #include "adc08d1020.h"
 #include "dac101c085.h"
+#include "lmh6518.h"
     
 #define FAMILY_NAME "kosagi-fpga"
 #define DATA_SIZE 4096
@@ -56,6 +57,7 @@ SamplingThread::SamplingThread(QObject *parent):
     pll = new Ad9520();
     adc = new Adc08d1020();
     dac = new Dac101c085();
+    vga = new Lmh6518();
 
     openDevice();
 }
@@ -64,6 +66,7 @@ SamplingThread::~SamplingThread()
 {
     if (nhdr)
         free(nhdr);
+    delete vga;
     delete dac;
     delete adc;
     delete pll;
@@ -87,6 +90,21 @@ void SamplingThread::setAmplitude(double amplitude)
 double SamplingThread::amplitude() const
 {
     return d_amplitude;
+}
+
+void SamplingThread::setAfeOffset(double offset)
+{
+    dac->setOffset(offset);
+}
+
+void SamplingThread::setAfeAttenuation(double attenuation)
+{
+    vga->setAttenuation(attenuation);
+}
+
+void SamplingThread::setAfeFilter(double filter)
+{
+    vga->setFilter(filter);
 }
 
 bool SamplingThread::openDevice(void)
@@ -129,6 +147,7 @@ bool SamplingThread::openDevice(void)
 
     pll->selfConfig(Ad9520::Speed500Mhz);
     adc->calibrate();
+    vga->setAuxPower(true);
 
     return true;
 }
