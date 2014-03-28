@@ -35,7 +35,7 @@ int Adc08d1020::i2cOpen(void)
     return 0;
 }
 
-int Adc08d1020::writeRegister(quint16 address, quint16 data)
+int Adc08d1020::writeRegister(quint8 address, quint16 data)
 {
     char i2cbuf[4]; 
     int slave_address = ADC08D1020_I2C_ADR;
@@ -89,18 +89,16 @@ int Adc08d1020::writeRegister(quint16 address, quint16 data)
       return 0;
 }
 
-int Adc08d1020::read(quint16 address, quint8 *byte)
+int Adc08d1020::read(quint8 address, quint8 *byte)
 {
     return readBuffer(address, byte, 1);
 }
 
-int Adc08d1020::readBuffer(quint16 address, quint8 *bytes, int count)
+int Adc08d1020::readBuffer(quint8 address, quint8 *bytes, int count)
 {
     int slave_address = ADC08D1020_I2C_ADR;
-    unsigned char buff[2];
-
+    unsigned char buff[1];
     struct i2c_msg msg[2];
-
     struct i2c_ioctl_rdwr_data {
         struct i2c_msg *msgs;  /* ptr to array of simple messages */
         int nmsgs;             /* number of messages to exchange */
@@ -111,8 +109,7 @@ int Adc08d1020::readBuffer(quint16 address, quint8 *bytes, int count)
         if (i2cOpen())
             return -1;
 
-    buff[0] = ((address & 0xFF00) >> 8);
-    buff[1] = (address & 0xFF);
+    buff[0] = address;
 
     // set address for read
     msg[0].addr = slave_address;

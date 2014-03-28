@@ -30,9 +30,9 @@ public:
     void testPattern(void);
 
 private:
-    int writeRegister(quint16 address, quint16 data);
-    int read(quint16 address, quint8 *byte);
-    int readBuffer(quint16 address, quint8 *bytes, int count);
+    int writeRegister(quint8 address, quint16 data);
+    int read(quint8 address, quint8 *byte);
+    int readBuffer(quint8 address, quint8 *bytes, int count);
     int i2cOpen(void);
 
     int i2c_fd;
