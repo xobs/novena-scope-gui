@@ -6,6 +6,10 @@
 #include <netlink/msg.h>
 #include <netlink/attr.h>
 
+class Ad9520;
+class Adc08d1020;
+class Dac101c085;
+
 class SamplingThread: public QwtSamplingThread
 {
     Q_OBJECT
@@ -40,4 +44,7 @@ private:
 
     double d_frequency;
     double d_amplitude;
+    Ad9520 *pll;
+    Adc08d1020 *adc;
+    Dac101c085 *dac;
 };

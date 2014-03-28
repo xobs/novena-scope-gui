@@ -1,5 +1,3 @@
-#include "samplingthread.h"
-#include "signaldata.h"
 #include <qwt_math.h>
 #include <math.h>
 
@@ -17,6 +15,12 @@
 #include <sys/ioctl.h>
 #include <sys/soundcard.h>
 #include <unistd.h>
+
+#include "samplingthread.h"
+#include "signaldata.h"
+#include "ad9520.h"
+#include "adc08d1020.h"
+#include "dac101c085.h"
     
 #define FAMILY_NAME "kosagi-fpga"
 #define DATA_SIZE 4096
@@ -49,6 +53,10 @@ SamplingThread::SamplingThread(QObject *parent):
     bufferData = NULL;
     bufferDataSize = 0;
 
+    pll = new Ad9520();
+    adc = new Adc08d1020();
+    dac = new Dac101c085();
+
     openDevice();
 }
 
@@ -56,6 +64,9 @@ SamplingThread::~SamplingThread()
 {
     if (nhdr)
         free(nhdr);
+    delete dac;
+    delete adc;
+    delete pll;
 }
 
 void SamplingThread::setFrequency(double frequency)
@@ -115,6 +126,9 @@ bool SamplingThread::openDevice(void)
     }
 
     nl_socket_disable_auto_ack(handle);
+
+    pll->selfConfig(Ad9520::Speed500Mhz);
+    adc->calibrate();
 
     return true;
 }
