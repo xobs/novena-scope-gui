@@ -7,7 +7,6 @@
 # modify it under the terms of the Qwt License, Version 1.0
 ################################################################
 
-CONFIG      += qwt
 MOC_DIR      = moc
 RCC_DIR      = resources
 
@@ -23,12 +22,8 @@ unix {
 TARGET   = oscilloscope
 
 HEADERS = \
-    signaldata.h \
-    plot.h \
-    knob.h \
-    wheelbox.h \
-    samplingthread.h \
-    curvedata.h \
+    scope.h \
+    scopedatasource.h \
     ad9520.h \
     adc08d1020.h \
     dac101c085.h \
@@ -36,12 +31,8 @@ HEADERS = \
     mainwindow.h 
 
 SOURCES = \
-    signaldata.cpp \
-    plot.cpp \
-    knob.cpp \
-    wheelbox.cpp \
-    samplingthread.cpp \
-    curvedata.cpp \
+    scope.cpp \
+    scopedatasource.cpp \
     mainwindow.cpp \
     ad9520.cpp \
     adc08d1020.cpp \

@@ -1,10 +1,3 @@
-#include <qwt_math.h>
-#include <math.h>
-
-#if QT_VERSION < 0x040600
-#define qFastSin(x) ::sin(x)
-#endif
-
 #include <netlink/genl/genl.h>
 #include <netlink/genl/family.h>
 #include <netlink/genl/ctrl.h>
@@ -16,8 +9,7 @@
 #include <sys/soundcard.h>
 #include <unistd.h>
 
-#include "samplingthread.h"
-#include "signaldata.h"
+#include "scopedatasource.h"
 #include "ad9520.h"
 #include "adc08d1020.h"
 #include "dac101c085.h"
@@ -26,26 +18,36 @@
 #define FAMILY_NAME "kosagi-fpga"
 #define DATA_SIZE 4096
 
+struct adc_samples {
+    uint8_t channel2[8];
+    uint8_t channel1[8];
+} __attribute__((__packed__));
+
 /* list of valid commands */
 enum kosagi_fpga_commands {
-        KOSAGI_CMD_UNSPEC,
-        KOSAGI_CMD_SEND,
-        KOSAGI_CMD_READ,
-        __KOSAGI_CMD_MAX,
+    KOSAGI_CMD_UNSPEC,
+    KOSAGI_CMD_SEND,
+    KOSAGI_CMD_READ,
+    KOSAGI_CMD_POWER_OFF,
+    KOSAGI_CMD_POWER_ON,
+    KOSAGI_CMD_FPGA_ASSERT_RESET,
+    KOSAGI_CMD_FPGA_DEASSERT_RESET,
+    KOSAGI_CMD_TRIGGER_SAMPLE,
+    __KOSAGI_CMD_MAX,
 };
 
 /* list of valid command attributes */
 enum kosagi_fpga_attributes {
-        KOSAGI_ATTR_NONE,
-        KOSAGI_ATTR_FPGA_DATA,
-        KOSAGI_ATTR_MESSAGE,
-        __KOSAGI_ATTR_MAX,
+    KOSAGI_ATTR_NONE,
+    KOSAGI_ATTR_FPGA_DATA,
+    KOSAGI_ATTR_MESSAGE,
+    __KOSAGI_ATTR_MAX,
 };
 
-SamplingThread::SamplingThread(QObject *parent):
-    QwtSamplingThread(parent),
-    d_frequency(5.0),
-    d_amplitude(20.0)
+ScopeDataSource::ScopeDataSource(QObject *parent):
+    QObject(parent),
+    d_frequency(5),
+    d_amplitude(20)
 {
     handle = NULL;
     cache = NULL;
@@ -62,7 +64,7 @@ SamplingThread::SamplingThread(QObject *parent):
     openDevice();
 }
 
-SamplingThread::~SamplingThread()
+ScopeDataSource::~ScopeDataSource()
 {
     if (nhdr)
         free(nhdr);
@@ -72,42 +74,47 @@ SamplingThread::~SamplingThread()
     delete pll;
 }
 
-void SamplingThread::setFrequency(double frequency)
+void ScopeDataSource::setFrequency(int frequency)
 {
     d_frequency = frequency;
 }
 
-double SamplingThread::frequency() const
+int ScopeDataSource::frequency() const
 {
     return d_frequency;
 }
 
-void SamplingThread::setAmplitude(double amplitude)
+void ScopeDataSource::setAmplitude(int amplitude)
 {
     d_amplitude = amplitude;
 }
 
-double SamplingThread::amplitude() const
+int ScopeDataSource::amplitude() const
 {
     return d_amplitude;
 }
 
-void SamplingThread::setAfeOffset(double offset)
+void ScopeDataSource::setDacOffset(int offset)
 {
     dac->setOffset(offset);
 }
 
-void SamplingThread::setAfeAttenuation(double attenuation)
+void ScopeDataSource::setDacTrigger(int trigger)
+{
+    dac->setTriggerLevel(trigger);
+}
+
+void ScopeDataSource::setAfeAttenuation(int attenuation)
 {
     vga->setAttenuation(attenuation);
 }
 
-void SamplingThread::setAfeFilter(double filter)
+void ScopeDataSource::setAfeFilter(int filter)
 {
     vga->setFilter(filter);
 }
 
-bool SamplingThread::openDevice(void)
+bool ScopeDataSource::openDevice(void)
 {
     int ret;
 
@@ -146,13 +153,17 @@ bool SamplingThread::openDevice(void)
     nl_socket_disable_auto_ack(handle);
 
     pll->selfConfig(Ad9520::Speed500Mhz);
+    adc->setDefaults();
     adc->calibrate();
     vga->setAuxPower(true);
+    dac->setOffset(0x700);
+    vga->setFilter(20);
+    vga->setAttenuation(20);
 
     return true;
 }
 
-struct nl_msg *SamplingThread::allocMsg(int cmd)
+struct nl_msg *ScopeDataSource::allocMsg(int cmd)
 {
     struct nl_msg *msg;
     void *header;
@@ -175,7 +186,7 @@ struct nl_msg *SamplingThread::allocMsg(int cmd)
     return msg;
 }
 
-int SamplingThread::sendReadRequest(void)
+int ScopeDataSource::sendReadRequest(void)
 {
     struct nl_msg *msg;
     int ret;
@@ -194,7 +205,7 @@ int SamplingThread::sendReadRequest(void)
     return 0;
 }
 
-int SamplingThread::doReadRequest(void)
+int ScopeDataSource::doReadRequest(void)
 {
     int ret;
     struct sockaddr_nl nla;
@@ -212,8 +223,6 @@ int SamplingThread::doReadRequest(void)
     }
 
     ghdr = (genlmsghdr *)nlmsg_data((const nlmsghdr *)nhdr);
-    bufferData = (quint32 *)genlmsg_user_data(ghdr, 0);
-    bufferDataPtr = (quint8 *)bufferData + 8;
 
     if (genlmsg_len(ghdr) != DATA_SIZE) {
         fprintf(stderr, "Warning: Wanted %d bytes, read %d bytes\n",
@@ -224,30 +233,34 @@ int SamplingThread::doReadRequest(void)
     }
 
     bufferDataSize = genlmsg_len(ghdr);
+    bufferData = (quint32 *)genlmsg_user_data(ghdr, 0);
+    bufferDataPtr = (quint8 *)bufferData;
+
     return 0;
 }
 
-void SamplingThread::sample(double elapsed)
+int ScopeDataSource::getData(int samples)
 {
-    if ( d_frequency > 0.0 )
-    {
-        /* Read more data, if necessary */
-        if (bufferDataSize < 1) {
-            if (sendReadRequest())
-                return;
-            if (doReadRequest())
-                return;
-        }
+    struct adc_samples *adc_samples;
+    QByteArray channel1, channel2;
 
-        const QPointF s(elapsed, *bufferDataPtr++);
-        bufferDataSize--;
+    if (sendReadRequest())
+        return -1;
+    if (doReadRequest())
+        return -1;
 
-        SignalData::instance().append(s);
+    adc_samples = (struct adc_samples *)bufferDataPtr;
 
-        /* Skip channel #2 */
-        if (!(bufferDataSize & 7)) {
-            bufferDataSize -= 8;
-            bufferDataPtr += 8;
-        }
+    while (bufferDataSize > 0) {
+        int i;
+        for (i = 0; i < 8; i++)
+            channel1.append(adc_samples->channel1[i]);
+        for (i = 0; i < 8; i++)
+            channel2.append(adc_samples->channel2[i]);
+        bufferDataSize -= sizeof(*adc_samples);
+        adc_samples++;
     }
+
+    emit scopeData(channel1, channel2);
+    return 0;
 }

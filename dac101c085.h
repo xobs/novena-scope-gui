@@ -12,6 +12,7 @@ public:
         trigger = 1,
     };
     void setOffset(quint16 offset);
+    void setTriggerLevel(quint16 offset);
 
 private:
     int i2cOpen(void);

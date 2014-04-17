@@ -1,8 +1,9 @@
-#include <qwidget.h>
+#include <QWidget>
 
-class Plot;
-class Knob;
-class WheelBox;
+class Scope;
+class QSlider;
+class QLabel;
+class ScopeDataSource;
 
 class MainWindow : public QWidget
 {
@@ -13,26 +14,23 @@ public:
 
     void start();
 
-    double amplitude() const;
-    double frequency() const;
-    double signalInterval() const;
-
-Q_SIGNALS:
-    void amplitudeChanged(double);
-    void frequencyChanged(double);
+signals:
     void signalIntervalChanged(double);
     void signalAfeOffsetChanged(double);
     void signalAfeFilterChanged(double);
     void signalAfeAttenuationChanged(double);
+    void signalAfeTriggerChanged(double);
 
 private:
-    Knob *d_frequencyKnob;
-    Knob *d_amplitudeKnob;
-    Knob *d_afeOffsetKnob;
-    Knob *d_afeFilterKnob;
-    Knob *d_afeAttenuationKnob;
-    WheelBox *d_timerWheel;
-    WheelBox *d_intervalWheel;
+    QSlider *d_afeOffsetSlider;
+    QLabel  *d_afeOffsetLabel;
+    QSlider *d_afeFilterSlider;
+    QLabel  *d_afeFilterLabel;
+    QSlider *d_afeAttenuationSlider;
+    QLabel  *d_afeAttenuationLabel;
+    QSlider *d_afeTriggerSlider;
+    QLabel  *d_afeTriggerLabel;
 
-    Plot *d_plot;
+    Scope *d_scope;
+    ScopeDataSource *d_scopeData;
 };

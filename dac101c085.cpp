@@ -120,12 +120,21 @@ int Dac101c085::readDac(enum dacType type, quint16 *value)
     return 0;
 }
 
-void Dac101c085::setOffset(quint16 code)
+void Dac101c085::setOffset(quint16 offset)
 {
-    if (code > 0xFFF) {
-        qDebug() << "Warning: code larger than 0xFFF; truncating.";
-        code = 0xFFF;
+    if (offset > 0xFFF) {
+        qDebug() << "Warning: offset larger than 0xFFF; truncating.";
+        offset = 0xFFF;
     }
   
-    writeDac(trim, (code & 0xFFFF));
+    writeDac(trim, (offset & 0xFFFF));
+}
+
+void Dac101c085::setTriggerLevel(quint16 level)
+{
+    if (level > 0xFFF) {
+        qDebug() << "Warning: trigger level larger than 0xFFF; truncating.";
+        level = 0xfff;
+    }
+    writeDac(trigger, (level & 0xffff));
 }

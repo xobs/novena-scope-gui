@@ -1,4 +1,4 @@
-#include <qwt_sampling_thread.h>
+#include <QObject>
 
 #include <netlink/genl/genl.h>
 #include <netlink/genl/family.h>
@@ -11,26 +11,27 @@ class Adc08d1020;
 class Dac101c085;
 class Lmh6518;
 
-class SamplingThread: public QwtSamplingThread
+class ScopeDataSource : public QObject
 {
     Q_OBJECT
 
 public:
-    SamplingThread(QObject *parent = NULL);
-    ~SamplingThread(void);
+    ScopeDataSource(QObject *parent = NULL);
+    ~ScopeDataSource(void);
 
-    double frequency() const;
-    double amplitude() const;
+    int frequency() const;
+    int amplitude() const;
 
-public Q_SLOTS:
-    void setAmplitude(double);
-    void setFrequency(double);
-    void setAfeOffset(double);
-    void setAfeFilter(double);
-    void setAfeAttenuation(double);
+public slots:
+    void setAmplitude(int);
+    void setFrequency(int);
+    void setDacOffset(int);
+    void setDacTrigger(int);
+    void setAfeFilter(int);
+    void setAfeAttenuation(int);
+    int getData(int samples);
 
 protected:
-    virtual void sample(double elapsed);
 
 private:
     bool openDevice(void);
@@ -46,10 +47,13 @@ private:
     quint8 *bufferDataPtr;
     int bufferDataSize;
 
-    double d_frequency;
-    double d_amplitude;
+    int d_frequency;
+    int d_amplitude;
     Ad9520 *pll;
     Adc08d1020 *adc;
     Dac101c085 *dac;
     Lmh6518 *vga;
+
+signals:
+    void scopeData(const QByteArray channel1, const QByteArray channel2);
 };
