@@ -18,11 +18,6 @@
 #define FAMILY_NAME "kosagi-fpga"
 #define DATA_SIZE 4096
 
-struct adc_samples {
-    uint8_t channel2[8];
-    uint8_t channel1[8];
-} __attribute__((__packed__));
-
 /* list of valid commands */
 enum kosagi_fpga_commands {
     KOSAGI_CMD_UNSPEC,
@@ -56,10 +51,10 @@ ScopeDataSource::ScopeDataSource(QObject *parent):
     bufferData = NULL;
     bufferDataSize = 0;
 
-    pll = new Ad9520();
-    adc = new Adc08d1020();
-    dac = new Dac101c085();
-    vga = new Lmh6518();
+    //    pll = new Ad9520();
+    //    adc = new Adc08d1020();
+    //    dac = new Dac101c085();
+    //    vga = new Lmh6518();
 
     openDevice();
 }
@@ -152,6 +147,7 @@ bool ScopeDataSource::openDevice(void)
 
     nl_socket_disable_auto_ack(handle);
 
+#if 0
     pll->selfConfig(Ad9520::Speed500Mhz);
     adc->setDefaults();
     adc->calibrate();
@@ -159,6 +155,7 @@ bool ScopeDataSource::openDevice(void)
     dac->setOffset(0x700);
     vga->setFilter(20);
     vga->setAttenuation(20);
+#endif
 
     return true;
 }
@@ -241,7 +238,9 @@ int ScopeDataSource::doReadRequest(void)
 
 int ScopeDataSource::getData(int samples)
 {
-    struct adc_samples *adc_samples;
+  quint16 *adc_samples;
+  unsigned short sample;
+  unsigned short swap;
     QByteArray channel1, channel2;
 
     if (sendReadRequest())
@@ -249,18 +248,13 @@ int ScopeDataSource::getData(int samples)
     if (doReadRequest())
         return -1;
 
-    adc_samples = (struct adc_samples *)bufferDataPtr;
-
     while (bufferDataSize > 0) {
-        int i;
-        for (i = 0; i < 8; i++)
-            channel1.append(adc_samples->channel1[i]);
-        for (i = 0; i < 8; i++)
-            channel2.append(adc_samples->channel2[i]);
-        bufferDataSize -= sizeof(*adc_samples);
-        adc_samples++;
+      sample = *adc_samples++;
+      channel1.append(sample);
+      bufferDataSize -= sizeof(*adc_samples);
     }
 
+    //    emit scopeData(channel1, channel2);
     emit scopeData(channel1, channel2);
     return 0;
 }
