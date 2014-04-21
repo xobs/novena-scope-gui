@@ -14,6 +14,8 @@
 #include "adc08d1020.h"
 #include "dac101c085.h"
 #include "lmh6518.h"
+
+#include <QDebug>
     
 #define FAMILY_NAME "kosagi-fpga"
 #define DATA_SIZE 4096
@@ -248,13 +250,16 @@ int ScopeDataSource::getData(int samples)
     if (doReadRequest())
         return -1;
 
+    adc_samples = (quint16 *) bufferData;
+
     while (bufferDataSize > 0) {
       sample = *adc_samples++;
       channel1.append(sample);
       bufferDataSize -= sizeof(*adc_samples);
+      //      qDebug() << ".";
     }
 
-    //    emit scopeData(channel1, channel2);
     emit scopeData(channel1, channel2);
+
     return 0;
 }
