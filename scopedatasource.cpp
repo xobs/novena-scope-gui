@@ -11,7 +11,7 @@
 
 #include "scopedatasource.h"
 #include "ad9520.h"
-#include "adc08d1020.h"
+#include "ad9265.h"
 #include "dac101c085.h"
 #include "lmh6518.h"
 
@@ -53,10 +53,8 @@ ScopeDataSource::ScopeDataSource(QObject *parent):
     bufferData = NULL;
     bufferDataSize = 0;
 
-    //    pll = new Ad9520();
-    //    adc = new Adc08d1020();
-    //    dac = new Dac101c085();
-    //    vga = new Lmh6518();
+    pll = new Ad9520();
+    adc = new Ad9265();
 
     openDevice();
 }
@@ -65,8 +63,6 @@ ScopeDataSource::~ScopeDataSource()
 {
     if (nhdr)
         free(nhdr);
-    delete vga;
-    delete dac;
     delete adc;
     delete pll;
 }
@@ -89,26 +85,6 @@ void ScopeDataSource::setAmplitude(int amplitude)
 int ScopeDataSource::amplitude() const
 {
     return d_amplitude;
-}
-
-void ScopeDataSource::setDacOffset(int offset)
-{
-    dac->setOffset(offset);
-}
-
-void ScopeDataSource::setDacTrigger(int trigger)
-{
-    dac->setTriggerLevel(trigger);
-}
-
-void ScopeDataSource::setAfeAttenuation(int attenuation)
-{
-    vga->setAttenuation(attenuation);
-}
-
-void ScopeDataSource::setAfeFilter(int filter)
-{
-    vga->setFilter(filter);
 }
 
 bool ScopeDataSource::openDevice(void)
@@ -149,15 +125,8 @@ bool ScopeDataSource::openDevice(void)
 
     nl_socket_disable_auto_ack(handle);
 
-#if 0
-    pll->selfConfig(Ad9520::Speed500Mhz);
+    pll->selfConfig(Ad9520::Speed100MHz);
     adc->setDefaults();
-    adc->calibrate();
-    vga->setAuxPower(true);
-    dac->setOffset(0x700);
-    vga->setFilter(20);
-    vga->setAttenuation(20);
-#endif
 
     return true;
 }

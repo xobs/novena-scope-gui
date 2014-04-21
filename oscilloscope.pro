@@ -25,7 +25,7 @@ HEADERS = \
     scope.h \
     scopedatasource.h \
     ad9520.h \
-    adc08d1020.h \
+    ad9265.h \
     dac101c085.h \
     lmh6518.h \
     mainwindow.h 
@@ -35,7 +35,7 @@ SOURCES = \
     scopedatasource.cpp \
     mainwindow.cpp \
     ad9520.cpp \
-    adc08d1020.cpp \
+    ad9265.cpp \
     dac101c085.cpp \
     lmh6518.cpp \
     main.cpp

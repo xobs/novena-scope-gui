@@ -120,6 +120,7 @@ public:
     enum speed {
         Speed500Mhz,
         Speed1GHz,
+	Speed100MHz,
     };
 
     Ad9520();

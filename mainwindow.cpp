@@ -17,6 +17,7 @@ MainWindow::MainWindow(QWidget *parent):
     d_scopeData = new ScopeDataSource(this);
     d_scope->setDataSource(d_scopeData);
 
+#if 0
     d_afeOffsetSlider = new QSlider(Qt::Horizontal, this);
     d_afeOffsetLabel = new QLabel("AFE offset");
     d_afeOffsetSlider->setRange(0, 0xfff);
@@ -36,7 +37,9 @@ MainWindow::MainWindow(QWidget *parent):
     d_afeTriggerLabel = new QLabel("AFE Trigger [dB]");
     d_afeTriggerSlider->setRange(0, 0xfff);
     d_afeTriggerSlider->setValue(20);
+#endif
 
+#if 0
     QVBoxLayout* vLayout1 = new QVBoxLayout();
     vLayout1->addStretch(10);
     vLayout1->addWidget(d_afeOffsetSlider);
@@ -50,11 +53,13 @@ MainWindow::MainWindow(QWidget *parent):
     vLayout1->addStretch(10);
     vLayout1->addWidget(d_afeTriggerSlider);
     vLayout1->addWidget(d_afeTriggerLabel);
+#endif
 
     QHBoxLayout *layout = new QHBoxLayout(this);
     layout->addWidget(d_scope, 10);
-    layout->addLayout(vLayout1);
+    //    layout->addLayout(vLayout1);
 
+#if 0
     connect(d_afeOffsetSlider, SIGNAL(valueChanged(int)),
             d_scopeData,     SLOT(setDacOffset(int)));
     connect(d_afeFilterSlider, SIGNAL(valueChanged(int)),
@@ -63,6 +68,7 @@ MainWindow::MainWindow(QWidget *parent):
             d_scopeData,            SLOT(setAfeAttenuation(int)));
     connect(d_afeTriggerSlider, SIGNAL(valueChanged(int)),
             d_scopeData,        SLOT(setDacTrigger(int)));
+#endif
 }
 
 void MainWindow::start()

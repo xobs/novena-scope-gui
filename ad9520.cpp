@@ -296,42 +296,81 @@ int Ad9520::selfConfig(enum speed speed)
     cache[AD9520_ENABLE_OUTPUT_ON_CSDLD_LSB] = 0x00;
     cache[AD9520_ENABLE_OUTPUT_ON_CSDLD_MSB] = 0x00;
 
-    // 0001  divider 0 is low for 2 cycles 
-    // 0001  divider 0 is high for 2 cycles
-    // total: divide-by-2 off of 1GHz ref = 500MHz
-    cache[AD9520_DIVIDER_0_PECL] = 0x11;  // fpga clock channel
+    if( speed == Speed100MHz ) {
+      cache[AD9520_DIVIDER_0_PECL] = 0x44;  // fpga clock channel
+      // 0100  divider 0 is low for 5 cycles 
+      // 0100  divider 0 is high for 5 cycles
+      // total: divide-by-10 off of 1GHz ref = 100MHz
+  
+      cache[AD9520_DIVIDER_0_BYPASS] = 0x00;
+      // 0     use divider
+      // 0     obey chip-level SYNC
+      // 0     divider output forced to low
+      // 0     divider starts low
+      // 0000  phase offset
 
-    // 0     use divider
-    // 0     obey chip-level SYNC
-    // 0     divider output forced to low
-    // 0     divider starts low
-    // 0000  phase offset
-    cache[AD9520_DIVIDER_0_BYPASS] = 0x00;
+      cache[AD9520_DIVIDER_0_POWER] = 0x04;
+      // ----- unused
+      // 1     powered down -- FPGA gets clock from ADC mirror
+      // 0     OUT0, OUT1, OUT2 connected to divider 0
+      // 0     duty-cycle correction enabled
+    } else {
+      // 0001  divider 0 is low for 2 cycles 
+      // 0001  divider 0 is high for 2 cycles
+      // total: divide-by-2 off of 1GHz ref = 500MHz
+      cache[AD9520_DIVIDER_0_PECL] = 0x11;  // fpga clock channel
+      
+      // 0     use divider
+      // 0     obey chip-level SYNC
+      // 0     divider output forced to low
+      // 0     divider starts low
+      // 0000  phase offset
+      cache[AD9520_DIVIDER_0_BYPASS] = 0x00;
 
-    // ----- unused
-    // 1     powered down -- FPGA gets clock from ADC mirror
-    // 0     OUT0, OUT1, OUT2 connected to divider 0
-    // 0     duty-cycle correction enabled
-    cache[AD9520_DIVIDER_0_POWER] = 0x04;
+      // ----- unused
+      // 1     powered down -- FPGA gets clock from ADC mirror
+      // 0     OUT0, OUT1, OUT2 connected to divider 0
+      // 0     duty-cycle correction enabled
+      cache[AD9520_DIVIDER_0_POWER] = 0x04;
+    }
 
-    // 0000  divider 0 is low for 1 cycles 
-    // 0000  divider 0 is high for 1 cycles
-    cache[AD9520_DIVIDER_1_PECL] = 0x00;  // adc clock channel
+    if( speed == Speed100MHz ) {
+      cache[AD9520_DIVIDER_1_PECL] = 0x44;  // adc clock channel
+      // 0100  divider 0 is low for 5 cycles 
+      // 0100  divider 0 is high for 5 cycles
+      // total: divide-by-10 off of 1GHz ref = 100MHz
+      cache[AD9520_DIVIDER_1_BYPASS] = 0x00;
+      // 0     enable divider
+      // 0     obey chip-level SYNC
+      // 0     divider output forced to low
+      // 0     divider starts low
+      // 0000  phase offset
+      cache[AD9520_DIVIDER_1_POWER] = 0x01;
+      // ----- unused
+      // 0     normal operation
+      // 0/1   OUT3, OUT4, OUT5 connected to 1 = VCO output / 0 = divider 1
+      // 1     duty-cycle correction disabled
+    } else {
 
-    // 1     bypass divider
-    // 0     obey chip-level SYNC
-    // 0     divider output forced to low
-    // 0     divider starts low
-    // 0000  phase offset
-    cache[AD9520_DIVIDER_1_BYPASS] = 0x80;
+      // 0000  divider 0 is low for 1 cycles 
+      // 0000  divider 0 is high for 1 cycles
+      cache[AD9520_DIVIDER_1_PECL] = 0x00;  // adc clock channel
+      
+      // 1     bypass divider
+      // 0     obey chip-level SYNC
+      // 0     divider output forced to low
+      // 0     divider starts low
+      // 0000  phase offset
+      cache[AD9520_DIVIDER_1_BYPASS] = 0x80;
 
-    // ----- unused
-    // 0     normal operation
-    // 0/1   OUT3, OUT4, OUT5 connected to 1 = VCO output / 0 = divider 1
-    // 1     duty-cycle correction disabled
-
-    cache[AD9520_DIVIDER_1_POWER] = 0x01;
-
+      // ----- unused
+      // 0     normal operation
+      // 0/1   OUT3, OUT4, OUT5 connected to 1 = VCO output / 0 = divider 1
+      // 1     duty-cycle correction disabled
+      
+      cache[AD9520_DIVIDER_1_POWER] = 0x01;
+    }
+      
     cache[AD9520_DIVIDER_2_PECL] = 0x11;
     cache[AD9520_DIVIDER_2_BYPASS] = 0x00;
 
@@ -349,7 +388,7 @@ int Ad9520::selfConfig(enum speed speed)
     // 001   divide by 3
     // 010   divide by 4
     // 110   bypass (divide by 1)
-    if (speed == Speed1GHz)
+    if (speed == Speed1GHz || speed == Speed100MHz)
         cache[AD9520_VCO_DIVIDER] = 0x00; 
     else
         cache[AD9520_VCO_DIVIDER] = 0x02; 

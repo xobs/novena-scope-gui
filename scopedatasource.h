@@ -7,9 +7,7 @@
 #include <netlink/attr.h>
 
 class Ad9520;
-class Adc08d1020;
-class Dac101c085;
-class Lmh6518;
+class Ad9265;
 
 class ScopeDataSource : public QObject
 {
@@ -25,10 +23,6 @@ public:
 public slots:
     void setAmplitude(int);
     void setFrequency(int);
-    void setDacOffset(int);
-    void setDacTrigger(int);
-    void setAfeFilter(int);
-    void setAfeAttenuation(int);
     int getData(int samples);
 
 protected:
@@ -50,9 +44,7 @@ private:
     int d_frequency;
     int d_amplitude;
     Ad9520 *pll;
-    Adc08d1020 *adc;
-    Dac101c085 *dac;
-    Lmh6518 *vga;
+    Ad9265 *adc;
 
 signals:
     void scopeData(const QByteArray channel1, const QByteArray channel2);
