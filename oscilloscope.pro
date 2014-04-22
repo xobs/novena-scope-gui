@@ -19,6 +19,8 @@ unix {
     OBJECTS_DIR       = obj
 }
 
+CONFIG += debug
+
 TARGET   = oscilloscope
 
 HEADERS = \

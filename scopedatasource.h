@@ -22,22 +22,34 @@ public:
     int frequency() const;
     int amplitude() const;
 
+    enum resetState {
+        enterReset,
+        exitReset,
+    };
+
 public slots:
     void setAmplitude(int);
     void setFrequency(int);
-    void setDacOffset(int);
-    void setDacTrigger(int);
-    void setAfeFilter(int);
-    void setAfeAttenuation(int);
+    void setDacOffset1(int);
+    void setDacTrigger1(int);
+    void setAfeFilter1(int);
+    void setAfeAttenuation1(int);
+    void setDacOffset2(int);
+    void setDacTrigger2(int);
+    void setAfeFilter2(int);
+    void setAfeAttenuation2(int);
     int getData(int samples);
+    int setResetState(enum resetState);
 
 protected:
 
 private:
     bool openDevice(void);
     struct nl_msg *allocMsg(int cmd);
+    int triggerSample(void);
     int sendReadRequest(void);
     int doReadRequest(void);
+    int setDefaults(void);
 
     struct nl_sock *handle;
     struct nl_cache *cache;
@@ -51,8 +63,10 @@ private:
     int d_amplitude;
     Ad9520 *pll;
     Adc08d1020 *adc;
-    Dac101c085 *dac;
-    Lmh6518 *vga;
+    Dac101c085 *dac1;
+    Dac101c085 *dac2;
+    Lmh6518 *vga1;
+    Lmh6518 *vga2;
 
 signals:
     void scopeData(const QByteArray channel1, const QByteArray channel2);

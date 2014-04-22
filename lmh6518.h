@@ -36,7 +36,12 @@
 class Lmh6518 {
 
 public:
-    Lmh6518();
+    enum addr {
+	    channel1Addr = 0x28,
+	    channel2Addr = 0x2a,
+    };
+
+    Lmh6518(enum addr addr);
     ~Lmh6518();
 
     int setPreampAuxPower(bool auxPower);
@@ -48,6 +53,7 @@ public:
 
 private:
     int i2c_fd;
+    enum addr i2cAddr;
     int write(quint16 data);
     int i2cOpen(void);
     int updateGain(bool auxpwr, quint32 filter,

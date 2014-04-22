@@ -65,7 +65,7 @@ int Adc08d1020::writeRegister(quint8 address, quint16 data)
     msgst.nmsgs = 1;
 
     if (ioctl(i2c_fd, I2C_RDWR, &msgst) < 0){
-        perror("Write failed\n");
+        perror("adc08d1020 write failed");
         return -1;
     }
 

@@ -68,7 +68,7 @@ int Ad9520::writeBuffer(quint16 address, quint8 *bytes, int count)
     msgst.nmsgs = 1;
 
     if (ioctl(i2c_fd, I2C_RDWR, &msgst) < 0) {
-        perror("Write failed\n");
+        perror("ad9520 write failed");
         return -1;
     }
     return 0;

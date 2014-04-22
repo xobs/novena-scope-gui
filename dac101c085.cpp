@@ -15,9 +15,11 @@
 #define DAC101C085_TRIG_I2C_ADR  0x4D
 #define DAC101C085_TRIM_I2C_ADR  0x4E
 
-Dac101c085::Dac101c085(void)
+Dac101c085::Dac101c085(enum dacAddress trigger, enum dacAddress trim)
 {
     i2c_fd = 0;
+    trimAddr = trim;
+    triggerAddr = trigger;
 }
 
 Dac101c085::~Dac101c085(void)
@@ -39,10 +41,9 @@ int Dac101c085::i2cOpen(void)
     return 0;
 }
 
-int Dac101c085::writeDac(enum dacType type, quint16 value)
+int Dac101c085::writeDac(enum dacAddress slave_address, quint16 value)
 {
     char i2cbuf[sizeof(value)];
-    int slave_address;
 
     struct i2c_msg msg[1];
     struct i2c_ioctl_rdwr_data {
@@ -53,15 +54,6 @@ int Dac101c085::writeDac(enum dacType type, quint16 value)
     if (!i2c_fd)
         if (i2cOpen())
             return -1;
-
-    if (type == trigger)
-        slave_address = DAC101C085_TRIG_I2C_ADR;
-    else if (type == trim)
-        slave_address = DAC101C085_TRIM_I2C_ADR;
-    else {
-        qDebug() << "Unrecognized DAC type";
-        return -1;
-    }
 
     i2cbuf[0] = ((value & 0xFF00) >> 8);
     i2cbuf[1] = (value & 0xFF);
@@ -75,15 +67,14 @@ int Dac101c085::writeDac(enum dacType type, quint16 value)
     msgst.nmsgs = 1;
 
     if (ioctl(i2c_fd, I2C_RDWR, &msgst) < 0) {
-        perror("Write failed\n");
+        perror("dac101c085 write failed");
         return -1;
     }
     return 0;
 }
 
-int Dac101c085::readDac(enum dacType type, quint16 *value)
+int Dac101c085::readDac(enum dacAddress slave_address, quint16 *value)
 {
-    int slave_address;
     struct i2c_msg msg[1];
     struct i2c_ioctl_rdwr_data {
         struct i2c_msg *msgs;  /* ptr to array of simple messages */
@@ -93,15 +84,6 @@ int Dac101c085::readDac(enum dacType type, quint16 *value)
     if (!i2c_fd)
         if (i2cOpen())
             return -1;
-
-    if (type == trigger)
-        slave_address = DAC101C085_TRIG_I2C_ADR;
-    else if (type == trim)
-        slave_address = DAC101C085_TRIM_I2C_ADR;
-    else {
-        qDebug() << "Unrecognized DAC type";
-        return -1;
-    }
 
     // set readback buffer
     msg[0].addr = slave_address;
@@ -127,7 +109,7 @@ void Dac101c085::setOffset(quint16 offset)
         offset = 0xFFF;
     }
   
-    writeDac(trim, (offset & 0xFFFF));
+    writeDac(trimAddr, (offset & 0xFFFF));
 }
 
 void Dac101c085::setTriggerLevel(quint16 level)
@@ -136,5 +118,5 @@ void Dac101c085::setTriggerLevel(quint16 level)
         qDebug() << "Warning: trigger level larger than 0xFFF; truncating.";
         level = 0xfff;
     }
-    writeDac(trigger, (level & 0xffff));
+    writeDac(triggerAddr, (level & 0xffff));
 }

@@ -1,3 +1,5 @@
+#include <QDebug>
+
 #include <netlink/genl/genl.h>
 #include <netlink/genl/family.h>
 #include <netlink/genl/ctrl.h>
@@ -58,20 +60,43 @@ ScopeDataSource::ScopeDataSource(QObject *parent):
 
     pll = new Ad9520();
     adc = new Adc08d1020();
-    dac = new Dac101c085();
-    vga = new Lmh6518();
+    dac1 = new Dac101c085(Dac101c085::channel1Trigger, Dac101c085::channel1Trim);
+    vga1 = new Lmh6518(Lmh6518::channel1Addr);
+    dac2 = new Dac101c085(Dac101c085::channel2Trigger, Dac101c085::channel2Trim);
+    vga2 = new Lmh6518(Lmh6518::channel2Addr);
 
     openDevice();
+    setResetState(enterReset);
+    setResetState(exitReset);
+    setDefaults();
 }
 
 ScopeDataSource::~ScopeDataSource()
 {
     if (nhdr)
         free(nhdr);
-    delete vga;
-    delete dac;
+    delete vga2;
+    delete vga1;
+    delete dac2;
+    delete dac1;
     delete adc;
     delete pll;
+}
+
+int ScopeDataSource::setDefaults(void)
+{
+    pll->selfConfig(Ad9520::Speed500Mhz);
+    adc->setDefaults();
+    adc->calibrate();
+    vga1->setAuxPower(true);
+    vga2->setAuxPower(true);
+    dac1->setOffset(0x700);
+    dac2->setOffset(0x700);
+    vga1->setFilter(20);
+    vga1->setAttenuation(20);
+    vga2->setFilter(20);
+    vga2->setAttenuation(20);
+    return 0;
 }
 
 void ScopeDataSource::setFrequency(int frequency)
@@ -94,24 +119,44 @@ int ScopeDataSource::amplitude() const
     return d_amplitude;
 }
 
-void ScopeDataSource::setDacOffset(int offset)
+void ScopeDataSource::setDacOffset1(int offset)
 {
-    dac->setOffset(offset);
+    dac1->setOffset(offset);
 }
 
-void ScopeDataSource::setDacTrigger(int trigger)
+void ScopeDataSource::setDacTrigger1(int trigger)
 {
-    dac->setTriggerLevel(trigger);
+    dac1->setTriggerLevel(trigger);
 }
 
-void ScopeDataSource::setAfeAttenuation(int attenuation)
+void ScopeDataSource::setAfeAttenuation1(int attenuation)
 {
-    vga->setAttenuation(attenuation);
+    vga1->setAttenuation(attenuation);
 }
 
-void ScopeDataSource::setAfeFilter(int filter)
+void ScopeDataSource::setAfeFilter1(int filter)
 {
-    vga->setFilter(filter);
+    vga1->setFilter(filter);
+}
+
+void ScopeDataSource::setDacOffset2(int offset)
+{
+    dac2->setOffset(offset);
+}
+
+void ScopeDataSource::setDacTrigger2(int trigger)
+{
+    dac2->setTriggerLevel(trigger);
+}
+
+void ScopeDataSource::setAfeAttenuation2(int attenuation)
+{
+    vga2->setAttenuation(attenuation);
+}
+
+void ScopeDataSource::setAfeFilter2(int filter)
+{
+    vga2->setFilter(filter);
 }
 
 bool ScopeDataSource::openDevice(void)
@@ -152,14 +197,6 @@ bool ScopeDataSource::openDevice(void)
 
     nl_socket_disable_auto_ack(handle);
 
-    pll->selfConfig(Ad9520::Speed500Mhz);
-    adc->setDefaults();
-    adc->calibrate();
-    vga->setAuxPower(true);
-    dac->setOffset(0x700);
-    vga->setFilter(20);
-    vga->setAttenuation(20);
-
     return true;
 }
 
@@ -186,6 +223,25 @@ struct nl_msg *ScopeDataSource::allocMsg(int cmd)
     return msg;
 }
 
+int ScopeDataSource::triggerSample(void)
+{
+    struct nl_msg *msg;
+    int ret;
+
+    msg = allocMsg(KOSAGI_CMD_TRIGGER_SAMPLE);
+    if (!msg)
+        return -1;
+
+    ret = nl_send_auto(handle, msg);
+    if (ret < 0) {
+        fprintf(stderr, "Unable to send msg: %s\n", nl_geterror(ret));
+        nlmsg_free(msg);
+        return ret;
+    }
+    nlmsg_free(msg);
+    return 0;
+}
+
 int ScopeDataSource::sendReadRequest(void)
 {
     struct nl_msg *msg;
@@ -202,6 +258,39 @@ int ScopeDataSource::sendReadRequest(void)
         return ret;
     }
     nlmsg_free(msg);
+    return 0;
+}
+
+int ScopeDataSource::setResetState(enum resetState resetState)
+{
+    struct nl_msg *msg;
+    int ret;
+
+    if (resetState == enterReset)
+        msg = allocMsg(KOSAGI_CMD_FPGA_ASSERT_RESET);
+    else if (resetState == exitReset)
+        msg = allocMsg(KOSAGI_CMD_FPGA_DEASSERT_RESET);
+    else {
+        qDebug() << "Unrecognized reset state";
+        return -1;
+    }
+
+    if (!msg) {
+        qDebug() << "Unable to alloc message";
+        return -1;
+    }
+
+    ret = nl_send_auto(handle, msg);
+    if (ret < 0) {
+        fprintf(stderr, "Unable to send msg: %s\n", nl_geterror(ret));
+        nlmsg_free(msg);
+        return ret;
+    }
+    nlmsg_free(msg);
+
+    if (resetState == exitReset)
+        setDefaults();
+
     return 0;
 }
 
@@ -244,6 +333,8 @@ int ScopeDataSource::getData(int samples)
     struct adc_samples *adc_samples;
     QByteArray channel1, channel2;
 
+    if (triggerSample())
+        return -1;
     if (sendReadRequest())
         return -1;
     if (doReadRequest())

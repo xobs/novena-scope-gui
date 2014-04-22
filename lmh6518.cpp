@@ -13,9 +13,10 @@
 #define I2C_PATH "/dev/i2c-1"
 #define LMH6518_I2C_ADR  0x28
 
-Lmh6518::Lmh6518(void)
+Lmh6518::Lmh6518(enum addr addr)
 {
     i2c_fd = 0;
+    i2cAddr = addr;
     attenuation = 0;
     filter = 0;
     auxPower = 0;
@@ -46,7 +47,6 @@ int Lmh6518::i2cOpen(void)
 int Lmh6518::write(quint16 value)
 {
     char i2cbuf[sizeof(value)];
-    int slave_address = LMH6518_I2C_ADR;
 
     struct i2c_msg msg[1];
     struct i2c_ioctl_rdwr_data {
@@ -61,7 +61,7 @@ int Lmh6518::write(quint16 value)
     i2cbuf[0] = ((value & 0xFF00) >> 8);
     i2cbuf[1] = (value & 0xFF);
 
-    msg[0].addr = slave_address;
+    msg[0].addr = i2cAddr;
     msg[0].flags = 0; // no flag means do a write
     msg[0].len = sizeof(value);
     msg[0].buf = i2cbuf;
@@ -70,7 +70,7 @@ int Lmh6518::write(quint16 value)
     msgst.nmsgs = 1;
 
     if (ioctl(i2c_fd, I2C_RDWR, &msgst) < 0) {
-        perror("Write failed");
+        perror("lmh6518 write failed");
         return -1;
     }
     return 0;

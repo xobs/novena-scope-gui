@@ -3,6 +3,7 @@
 class Scope;
 class QSlider;
 class QLabel;
+class QCheckBox;
 class ScopeDataSource;
 
 class MainWindow : public QWidget
@@ -14,22 +15,32 @@ public:
 
     void start();
 
-signals:
-    void signalIntervalChanged(double);
-    void signalAfeOffsetChanged(double);
-    void signalAfeFilterChanged(double);
-    void signalAfeAttenuationChanged(double);
-    void signalAfeTriggerChanged(double);
+public slots:
+    void processCheckbox(int state);
 
 private:
-    QSlider *d_afeOffsetSlider;
-    QLabel  *d_afeOffsetLabel;
-    QSlider *d_afeFilterSlider;
-    QLabel  *d_afeFilterLabel;
-    QSlider *d_afeAttenuationSlider;
-    QLabel  *d_afeAttenuationLabel;
-    QSlider *d_afeTriggerSlider;
-    QLabel  *d_afeTriggerLabel;
+    QLabel *d_channel1Label;
+    QLabel *d_channel2Label;
+
+    QSlider *d_afeOffsetCh1Slider;
+    QLabel  *d_afeOffsetCh1Label;
+    QSlider *d_afeFilterCh1Slider;
+    QLabel  *d_afeFilterCh1Label;
+    QSlider *d_afeAttenuationCh1Slider;
+    QLabel  *d_afeAttenuationCh1Label;
+    QSlider *d_afeTriggerCh1Slider;
+    QLabel  *d_afeTriggerCh1Label;
+
+    QSlider *d_afeOffsetCh2Slider;
+    QLabel  *d_afeOffsetCh2Label;
+    QSlider *d_afeFilterCh2Slider;
+    QLabel  *d_afeFilterCh2Label;
+    QSlider *d_afeAttenuationCh2Slider;
+    QLabel  *d_afeAttenuationCh2Label;
+    QSlider *d_afeTriggerCh2Slider;
+    QLabel  *d_afeTriggerCh2Label;
+
+    QCheckBox *d_resetBox;
 
     Scope *d_scope;
     ScopeDataSource *d_scopeData;
