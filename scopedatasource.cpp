@@ -1,5 +1,12 @@
 #include <QDebug>
 
+#include <linux/types.h>
+#include <linux/socket.h>
+#include <bits/sockaddr.h>
+
+#include <netlink/socket.h>
+#include <netlink/errno.h>
+
 #include <netlink/genl/genl.h>
 #include <netlink/genl/family.h>
 #include <netlink/genl/ctrl.h>
